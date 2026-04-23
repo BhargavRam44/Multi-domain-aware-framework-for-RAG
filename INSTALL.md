@@ -28,7 +28,6 @@ The API key is already hardcoded in `app.py`, but you can also set it as an envi
 
 **Windows:**
 ```bash
-set GEMINI_API_KEY=AIzaSyB7mQq8Ag5zqGG3T3Pe6iqP-PaKzC4MRe4
 ```
 
 **Linux/Mac:**
