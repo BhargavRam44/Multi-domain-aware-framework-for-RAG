@@ -20,7 +20,7 @@ CORS(app, supports_credentials=True)
 # -------------------------------------------------------
 # Configuration
 # -------------------------------------------------------
-GROQ_API_KEY     = os.environ.get('GROQ_API_KEY', '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')
+GROQ_API_KEY     = os.environ.get('GROQ_API_KEY', 'Your groq ai api key')
 GENERATION_MODEL = 'llama-3.3-70b-versatile'
 SESSION_DAYS     = 7
 
