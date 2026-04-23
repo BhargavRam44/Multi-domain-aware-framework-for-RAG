@@ -1,0 +1,106 @@
+{
+  "Healthcare": {
+    "keywords": [
+      "diagnosis",
+      "treatment",
+      "medication",
+      "patient",
+      "symptom",
+      "clinical",
+      "medical",
+      "disease",
+      "therapy",
+      "prescription",
+      "hospital",
+      "doctor",
+      "nurse",
+      "healthcare",
+      "health",
+      "illness",
+      "infection",
+      "virus",
+      "bacteria",
+      "vaccine"
+    ],
+    "context": "Healthcare and medical information context"
+  },
+  "Legal": {
+    "keywords": [
+      "contract",
+      "law",
+      "regulation",
+      "compliance",
+      "legal",
+      "statute",
+      "court",
+      "jurisdiction",
+      "liability",
+      "agreement",
+      "attorney",
+      "lawsuit",
+      "plaintiff",
+      "defendant",
+      "judgment",
+      "legislation",
+      "rights",
+      "obligation",
+      "enforcement",
+      "judicial"
+    ],
+    "context": "Legal and regulatory context"
+  },
+  "Finance": {
+    "keywords": [
+      "investment",
+      "portfolio",
+      "revenue",
+      "profit",
+      "financial",
+      "budget",
+      "asset",
+      "liability",
+      "equity",
+      "market",
+      "stock",
+      "bond",
+      "dividend",
+      "interest",
+      "loan",
+      "credit",
+      "debt",
+      "capital",
+      "trading",
+      "banking"
+    ],
+    "context": "Financial and business context"
+  },
+  "Technology": {
+    "keywords": [
+      "software",
+      "hardware",
+      "algorithm",
+      "code",
+      "system",
+      "network",
+      "database",
+      "API",
+      "cloud",
+      "security",
+      "programming",
+      "server",
+      "application",
+      "development",
+      "infrastructure",
+      "data",
+      "digital",
+      "cyber",
+      "tech",
+      "computing"
+    ],
+    "context": "Technology and software context"
+  },
+  "General": {
+    "keywords": [],
+    "context": "General knowledge context"
+  }
+}

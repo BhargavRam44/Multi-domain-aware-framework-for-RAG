@@ -1,0 +1,9 @@
+setuptools>=65.0.0
+wheel>=0.40.0
+Flask>=3.0.0
+flask-cors>=4.0.0
+PyPDF2>=3.0.0
+numpy>=1.24.0
+requests>=2.31.0
+mysql-connector-python>=8.0.0
+bcrypt>=4.0.0

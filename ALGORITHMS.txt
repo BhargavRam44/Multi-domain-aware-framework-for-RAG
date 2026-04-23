@@ -1,0 +1,318 @@
+================================================================================
+MULTI-DOMAIN RAG APPLICATION — ALGORITHMS REFERENCE
+================================================================================
+Generated from: app.py
+Date: 2026-03-16
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. TEXT EXTRACTION
+--------------------------------------------------------------------------------
+Algorithm : PyPDF2 Page-by-Page Text Extraction
+Function  : extract_text_from_pdf(pdf_file)
+Location  : app.py, line 188
+
+Description:
+  Uses the PyPDF2 library to open an uploaded PDF file in memory (as a byte
+  stream). Iterates over every page in the document and calls
+  page.extract_text() on each, concatenating results with a newline separator.
+  Supports plain text files (.txt) as a direct read fallback.
+
+Steps:
+  1. Receive file object (PDF or TXT) from the upload route.
+  2. For PDF: wrap bytes in io.BytesIO, open with PyPDF2.PdfReader.
+  3. Loop through reader.pages and accumulate page text.
+  4. For TXT: decode bytes directly as UTF-8.
+  5. Return the full raw text string, or None on error.
+
+Limitations:
+  - Cannot extract text from scanned/image-only PDFs (no OCR).
+  - Column-heavy or table-heavy PDFs may produce garbled word order.
+
+
+--------------------------------------------------------------------------------
+2. TEXT CHUNKING
+--------------------------------------------------------------------------------
+Algorithm : Sliding Window Word Chunking (with overlap)
+Function  : chunk_text(text, chunk_size=500, overlap=50)
+Location  : app.py, line 199
+
+Description:
+  Splits the extracted text into overlapping windows of words so that context
+  near a chunk boundary is not lost. Each chunk contains up to chunk_size words.
+  Consecutive chunks share 'overlap' words to preserve boundary context.
+
+Steps:
+  1. Split full document text on whitespace into a word list.
+  2. Iterate with step = chunk_size - overlap (450 words per step).
+  3. Slice words[i : i + chunk_size] to form each chunk string.
+  4. Skip empty slices.
+  5. Return list of chunk strings.
+
+Parameters:
+  chunk_size = 500 words per chunk
+  overlap    = 50  words shared between consecutive chunks
+  step       = 450 words (chunk_size - overlap)
+
+Example:
+  Words 0-499   -> Chunk 1
+  Words 450-949 -> Chunk 2  (50-word overlap with Chunk 1)
+  Words 900-1399-> Chunk 3  (50-word overlap with Chunk 2)
+
+
+--------------------------------------------------------------------------------
+3. VECTOR EMBEDDING
+--------------------------------------------------------------------------------
+Algorithm : N-Gram Frequency Hashing (Bag-of-N-Grams with L2 Normalisation)
+Function  : get_embedding(text)
+Location  : app.py, line 211
+
+Description:
+  Converts a text string into a 1536-dimensional float vector using term
+  frequency over hashed unigrams and bigrams. This provides genuine keyword
+  overlap-based similarity without requiring any external embedding API.
+
+Steps:
+  1. Lowercase the text and extract all alphanumeric tokens with regex.
+  2. Remove common English stop-words (the, a, is, in, of, to, ...).
+  3. Remove tokens shorter than 2 characters.
+  4. Build n-gram list: all unigrams + all consecutive bigrams
+     (e.g. "profit_maximization").
+  5. For each n-gram, compute MD5 hash and map to a bucket index:
+       idx = int(MD5(ngram).hexdigest(), 16) % 1536
+  6. Increment vec[idx] by 1.0 for each occurrence.
+  7. L2-normalise the vector: vec = vec / ||vec||
+  8. Return the normalised 1536-dim list.
+
+Why 1536 dimensions:
+  Matches the standard OpenAI embedding dimension for compatibility if the
+  embedding backend is later upgraded to a real model.
+
+Similarity measure used downstream:
+  Cosine similarity (see Section 4).
+
+
+--------------------------------------------------------------------------------
+4. COSINE SIMILARITY
+--------------------------------------------------------------------------------
+Algorithm : Cosine Similarity
+Function  : cosine_similarity(a, b)
+Location  : app.py, line 366
+
+Description:
+  Measures the angle between two embedding vectors. A score of 1.0 means
+  identical direction (most similar); 0.0 means orthogonal (no overlap).
+
+Formula:
+  similarity = dot(a, b) / (||a|| * ||b||)
+
+Steps:
+  1. Convert lists a and b to numpy arrays.
+  2. Compute L2 norms of both vectors.
+  3. If either norm is zero, return 0.0 (avoid division by zero).
+  4. Return dot product divided by product of norms, cast to float.
+
+
+--------------------------------------------------------------------------------
+5. DIRECT RETRIEVAL
+--------------------------------------------------------------------------------
+Algorithm : Brute-Force Top-K Cosine Similarity Search
+Function  : direct_retrieval(query_embedding, user_id, top_k=5)
+Location  : app.py, line 373
+
+Description:
+  Retrieves the most semantically similar document chunks for a query by
+  exhaustively computing cosine similarity between the query embedding and
+  every stored chunk embedding. Returns the top-K results ranked by score.
+
+Steps:
+  1. Load the user's in-memory document store.
+  2. Compute cosine_similarity(query_embedding, chunk_embedding) for every
+     stored chunk.
+  3. Sort all (index, score) pairs in descending order of similarity.
+  4. Return the top_k chunks with their text, chunk_id, similarity score,
+     and metadata.
+
+Parameters:
+  top_k = 5 (retrieves the 5 most relevant chunks)
+
+Use case:
+  Fast, single-pass lookup. Best for short, factual, direct questions.
+
+
+--------------------------------------------------------------------------------
+6. LLM-ASSISTED RETRIEVAL (QUERY EXPANSION)
+--------------------------------------------------------------------------------
+Algorithm : Query Expansion + Multi-Query Retrieval + Deduplication
+Function  : llm_assisted_retrieval(query, user_id, top_k=3)
+Location  : app.py, line 383
+
+Description:
+  Improves recall for complex queries by using the LLM to rephrase the
+  original question into 3 alternative formulations, then running
+  direct retrieval on all formulations and merging results.
+
+Steps:
+  1. Retrieve domain info for the user's active domain.
+  2. Send the original query to the LLM with a prompt requesting 3
+     alternative phrasings that would help find relevant information.
+  3. Embed the original query and run direct_retrieval (top 5).
+  4. For each of the first 2 expanded queries (split by newline):
+       a. Embed the expanded query.
+       b. Run direct_retrieval (top 2).
+       c. Append results to the combined list.
+  5. Deduplicate by chunk_id (keep first occurrence).
+  6. Re-sort all unique results by similarity score (descending).
+  7. Return the top_k unique chunks and the raw expansion text.
+
+Parameters:
+  top_k = 3 (final number of unique chunks returned)
+
+Use case:
+  Complex analytical questions that use different wording from the document
+  (e.g., "explain the drawbacks of profit maximization" may expand to
+  "limitations of profit maximisation objective", "criticism of profit goal").
+
+
+--------------------------------------------------------------------------------
+7. RETRIEVAL MODE AUTO-DETECTION
+--------------------------------------------------------------------------------
+Algorithm : Keyword Scoring Heuristic
+Function  : detect_retrieval_mode(query)
+Location  : app.py, line 682
+
+Description:
+  Automatically decides whether to use Direct Retrieval or LLM-Assisted
+  Retrieval based on question complexity signals, without requiring the user
+  to manually choose.
+
+Steps:
+  1. Lowercase and strip the query.
+  2. Score for direct retrieval (short, factual keywords):
+       +1 per match in: ['what is', 'define', 'who is', 'when is', 'list',
+                         'name', 'how many', 'short', 'quick', 'simple']
+       +1 if query is under 8 words.
+  3. Score for LLM-assisted retrieval (analytical keywords):
+       +2 per match in: ['compare', 'contrast', 'analyze', 'discuss',
+                         'advantages', 'disadvantages', 'relationship',
+                         'explain', 'summarize', 'why', 'implications', ...]
+       +1 if query is over 15 words.
+  4. If llm_score > direct_score -> use 'llm_assisted'.
+     Otherwise -> use 'direct'.
+
+Rationale:
+  LLM-assisted keywords receive +2 weight because synthesis questions have
+  a higher cost of wrong retrieval mode than simple factual questions.
+
+
+--------------------------------------------------------------------------------
+8. DOMAIN GATE (OFF-DOMAIN DETECTION)
+--------------------------------------------------------------------------------
+Algorithm : Two-Step LLM Classification + Sentinel Detection
+Function  : generate_text_domain_aware(query, context, domain_id, domain_info)
+Location  : app.py, line 285
+
+Description:
+  Uses a dedicated, minimal LLM call to binary-classify whether the user's
+  question belongs to the active domain before running full answer generation.
+  This avoids using the LLM's general knowledge to answer off-domain questions.
+
+Step 1 — Domain Gate (skipped for 'general' domain):
+  1. Build a system prompt instructing the LLM to output exactly
+     '__OFF_DOMAIN__' or '__RELEVANT__' (no other text).
+  2. Call _groq_call with temperature=0.0 (deterministic) and max_tokens=10.
+  3. If '__OFF_DOMAIN__' is found in the response, return None immediately.
+     The caller then returns the refusal message to the user.
+
+Step 2 — Answer Generation (only runs if gate passes):
+  1. Build a domain-specific system message instructing the model to:
+       - Answer only from the provided context.
+       - Extract all relevant details exhaustively.
+       - Structure output with headings/bullets.
+       - Say "documents do not contain..." if context is empty.
+  2. Build a user message with the context chunks and the question.
+  3. Call _groq_call with temperature=0.2 and max_tokens=4096.
+  4. Return the response string.
+
+Why two separate calls:
+  Mixing domain classification and answer generation in one prompt causes the
+  model to conflate "question is off-domain" with "context lacks information",
+  resulting in false refusals for valid in-domain questions.
+
+
+--------------------------------------------------------------------------------
+9. AUTHENTICATION
+--------------------------------------------------------------------------------
+Algorithm : bcrypt Password Hashing + Cryptographic Session Tokens
+Functions : hash_password, check_password, create_session_token, get_user_from_token
+Location  : app.py, lines 107-143
+
+Description:
+  Implements secure stateless session management without third-party auth
+  libraries. Passwords are never stored in plain text.
+
+Password Hashing (bcrypt):
+  - hash_password(password): bcrypt.hashpw(password, bcrypt.gensalt())
+  - check_password(password, hashed): bcrypt.checkpw(password, hashed)
+  - bcrypt applies a one-way, salted, adaptive cost function (work factor).
+
+Session Token Generation:
+  1. Generate 64 cryptographically random bytes with secrets.token_hex(64).
+  2. Store token + user_id + expiry (24 hours) in the sessions DB table.
+  3. On each request, @require_auth decorator calls get_user_from_token().
+  4. Token is looked up in DB; if expired or missing, request is rejected 401.
+
+Security properties:
+  - Tokens are unguessable (128 bits of entropy).
+  - Tokens expire after 24 hours.
+  - Passwords are never stored or logged.
+
+
+--------------------------------------------------------------------------------
+10. LLM TEXT GENERATION
+--------------------------------------------------------------------------------
+Algorithm : Groq Chat Completions API with Exponential Retry
+Functions : _groq_call, generate_text
+Location  : app.py, lines 239-283
+Model     : llama-3.3-70b-versatile (GENERATION_MODEL)
+
+Description:
+  All LLM calls are routed through _groq_call(), which handles retries and
+  error classification. Two generation modes are used:
+
+  generate_text(prompt):
+    - Single user message, temperature=0.7, max_tokens=2048.
+    - Used for query expansion in LLM-Assisted Retrieval.
+
+  _groq_call(messages, temperature, max_tokens):
+    - Accepts a full messages array (system + user roles).
+    - Used by generate_text_domain_aware for domain gate and answer generation.
+    - Retry loop: up to 2 attempts on timeout or connection error.
+
+Temperatures used per task:
+  Domain gate classification : 0.0 (fully deterministic)
+  Answer generation          : 0.2 (mostly deterministic, slight variation)
+  Query expansion            : 0.7 (creative rephrasing)
+
+
+================================================================================
+SUMMARY TABLE
+================================================================================
+
+ #  | Algorithm                        | Input            | Output
+----|----------------------------------|------------------|----------------------
+ 1  | PyPDF2 Text Extraction           | PDF/TXT file     | Raw text string
+ 2  | Sliding Window Chunking          | Raw text         | List of text chunks
+ 3  | N-Gram Hashing Embedding         | Text string      | 1536-dim float vector
+ 4  | Cosine Similarity                | Two vectors      | Float score [0, 1]
+ 5  | Brute-Force Top-K Retrieval      | Query embedding  | Top-5 chunks
+ 6  | Query Expansion + Multi-Retrieval| Query string     | Top-3 merged chunks
+ 7  | Keyword Scoring Heuristic        | Query string     | 'direct'/'llm_assisted'
+ 8  | Two-Step LLM Domain Gate         | Query + context  | Answer or None
+ 9  | bcrypt + Secure Token Auth       | Password/token   | Hash / User object
+10  | Groq LLM Generation w/ Retry     | Messages array   | Generated text
+
+================================================================================
+END OF DOCUMENT
+================================================================================
