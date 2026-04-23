@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Domain RAG System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>RAG System</h1>
+                <p>Multi-Domain Retrieval</p>
+            </div>
+
+            <!-- Domain Selector -->
+            <div class="domain-selector">
+                <label for="domain">Select Domain</label>
+                <select id="domain" class="select-input">
+                    <option value="General">General</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Technology">Technology</option>
+                </select>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <label class="upload-label">Upload PDF Document</label>
+                <div class="dropzone" id="dropzone">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="dropzone-text">Drop PDF here or click to browse</p>
+                    <input type="file" id="fileInput" accept=".pdf" hidden>
+                </div>
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Uploading...</p>
+                </div>
+            </div>
+
+            <!-- Document Info -->
+            <div class="document-info" id="documentInfo" style="display: none;">
+                <h3>Uploaded Document</h3>
+                <div class="info-item">
+                    <span class="info-label">Chunks:</span>
+                    <span class="info-value" id="chunksCount">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Domain:</span>
+                    <span class="info-value" id="currentDomain">General</span>
+                </div>
+            </div>
+
+            <!-- Retrieval Method Selector -->
+            <div class="retrieval-method" id="retrievalMethod" style="display: none;">
+                <label>Retrieval Method</label>
+                <div class="method-buttons">
+                    <button class="method-btn active" id="directBtn" data-method="direct">
+                        Direct
+                    </button>
+                    <button class="method-btn" id="llmBtn" data-method="llm">
+                        LLM-Assisted
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content">
+            <div class="chat-header">
+                <h2>Chat Interface</h2>
+                <div class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-text" id="statusText">Ready</span>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <h3>Welcome to Multi-Domain RAG System</h3>
+                    <p>Upload a PDF document, select a domain, and start asking questions!</p>
+                    <div class="features">
+                        <div class="feature-item">
+                            <span class="feature-icon">📄</span>
+                            <span>PDF Processing</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🎯</span>
+                            <span>Domain-Aware</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🔍</span>
+                            <span>Dual Retrieval</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🤖</span>
+                            <span>AI-Powered</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Ask a question about your document..."
+                        disabled
+                    >
+                    <button id="sendBtn" class="send-btn" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

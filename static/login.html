@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Multi-Domain RAG System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+
+    <div class="auth-bg">
+        <div class="auth-orb orb-1"></div>
+        <div class="auth-orb orb-2"></div>
+        <div class="auth-grid"></div>
+    </div>
+
+    <div class="auth-wrapper">
+
+        <!-- Brand -->
+        <div class="auth-brand">
+            <div class="auth-brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                    <path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
+                </svg>
+            </div>
+            <span>RAG System</span>
+        </div>
+
+        <!-- Card -->
+        <div class="auth-card">
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form active" id="formLogin" onsubmit="handleLogin(event)">
+                <div class="form-header">
+                    <h1 class="form-title">Welcome back</h1>
+                    <p class="form-subtitle">Sign in to your account to continue</p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="loginEmail">Email</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+                        </svg>
+                        <input type="email" id="loginEmail" class="field-input" placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="loginPassword">Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                        <input type="password" id="loginPassword" class="field-input" placeholder="Enter your password" required>
+                        <button type="button" class="field-toggle" onclick="togglePassword('loginPassword', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="error-box" id="loginError" style="display:none"></div>
+
+                <button type="submit" class="btn-auth" id="loginSubmit">
+                    <span class="btn-auth-label">Sign In</span>
+                    <div class="btn-spinner" style="display:none"></div>
+                </button>
+            </form>
+
+            <!-- Signup Form -->
+            <form class="auth-form" id="formSignup" onsubmit="handleSignup(event)">
+                <div class="form-header">
+                    <h1 class="form-title">Create account</h1>
+                    <p class="form-subtitle">Start using the Multi-Domain RAG System</p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="signupUsername">Username</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                        </svg>
+                        <input type="text" id="signupUsername" class="field-input" placeholder="Choose a username" required minlength="3">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="signupEmail">Email</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+                        </svg>
+                        <input type="email" id="signupEmail" class="field-input" placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="signupPassword">Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                        <input type="password" id="signupPassword" class="field-input" placeholder="Min 6 characters" required minlength="6">
+                        <button type="button" class="field-toggle" onclick="togglePassword('signupPassword', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="signupConfirm">Confirm Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                        </svg>
+                        <input type="password" id="signupConfirm" class="field-input" placeholder="Repeat your password" required>
+                    </div>
+                </div>
+
+                <div class="password-strength" id="passwordStrength" style="display:none">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <span class="strength-label" id="strengthLabel">Weak</span>
+                </div>
+
+                <div class="error-box" id="signupError" style="display:none"></div>
+
+                <button type="submit" class="btn-auth" id="signupSubmit">
+                    <span class="btn-auth-label">Create Account</span>
+                    <div class="btn-spinner" style="display:none"></div>
+                </button>
+            </form>
+
+        </div>
+
+        <p class="auth-footer">Multi-Domain Knowledge Assistant &copy; 2026</p>
+    </div>
+
+    <script src="/static/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-domain aware framework for RAG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style media="print">
+        body * { visibility: hidden !important; }
+        #printArea, #printArea * { visibility: visible !important; }
+        #printArea {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            background: #fff;
+            color: #111;
+            padding: 32px 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+        .print-header { margin-bottom: 24px; border-bottom: 2px solid #2563eb; padding-bottom: 12px; }
+        .print-header h1 { font-size: 20px; font-weight: 700; color: #1e3a8a; margin: 0 0 4px; }
+        .print-header p { font-size: 12px; color: #64748b; margin: 0; }
+        .print-msg { margin-bottom: 18px; page-break-inside: avoid; }
+        .print-msg-role { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+        .print-msg-role.user { color: #2563eb; }
+        .print-msg-role.assistant { color: #059669; }
+        .print-msg-text { background: #f8fafc; border-left: 3px solid #cbd5e1; padding: 10px 14px; border-radius: 0 6px 6px 0; white-space: pre-wrap; word-break: break-word; }
+        .print-msg-role.user + .print-msg-text { border-left-color: #2563eb; }
+        .print-msg-role.assistant + .print-msg-text { border-left-color: #059669; }
+        .print-footer { margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 11px; color: #94a3b8; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- ===================== PAGE 1: DOMAIN SELECTION ===================== -->
+    <div class="page active" id="page-domain">
+        <div class="page-bg">
+            <div class="bg-orb orb-1"></div>
+            <div class="bg-orb orb-2"></div>
+            <div class="bg-grid"></div>
+        </div>
+        <div class="page-content">
+            <div class="page-topbar">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+                    </div>
+                    <span class="brand-label">RAG System</span>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-user">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
+                        <span id="userDisplayNameP1">User</span>
+                    </div>
+                    <button class="btn-logout" onclick="logout()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="hero">
+                <h1 class="hero-title">Multi-domain aware framework for RAG</h1>
+                <p class="hero-subtitle">Select your domain to unlock specialized AI-powered document retrieval and intelligent question answering.</p>
+            </div>
+
+            <!-- Previous Conversations Section -->
+            <div class="page1-history-section" id="page1HistorySection" style="display:none">
+                <div class="page1-history-header">
+                    <h3 class="page1-history-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Continue Previous Conversation
+                    </h3>
+                    <p class="page1-history-subtitle">Or start a new one by selecting a domain below</p>
+                </div>
+                <div class="page1-history-list" id="page1HistoryList"></div>
+            </div>
+
+            <div class="domain-grid" id="domainGrid">
+                <!-- Domains inserted by JS -->
+            </div>
+
+            <div class="domain-desc-box" id="domainDescBox">
+                <div class="desc-icon" id="descIcon"></div>
+                <div class="desc-text" id="descText">Select a domain above to see its description.</div>
+            </div>
+
+            <div class="page1-actions">
+                <button class="btn-add-custom" id="btnAddDomainPage1">+ Add Custom Domain</button>
+                <button class="btn-primary" id="btnProceed" disabled onclick="goToPage('upload')">
+                    Proceed to Upload
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PAGE 2: UPLOAD ===================== -->
+    <div class="page" id="page-upload">
+        <div class="page-bg">
+            <div class="bg-orb orb-3"></div>
+            <div class="bg-grid"></div>
+        </div>
+        <div class="page-content page-upload-content">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <button class="btn-back" onclick="goToPage('domain')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg>
+                        Back
+                    </button>
+                    <div class="page-step">
+                        <span class="step-badge">Step 2 of 3</span>
+                        <h2 class="page-title">Upload Knowledge Resources</h2>
+                        <p class="page-subtitle">Upload PDF or TXT files to build your domain knowledge base.</p>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-user">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
+                        <span id="userDisplayNameP2">User</span>
+                    </div>
+                    <button class="btn-logout" onclick="logout()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Previous Conversations Section -->
+            <div class="upload-history-section">
+                <div class="upload-history-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <h3>Continue Previous Conversation</h3>
+                </div>
+                <div class="upload-history-list" id="uploadHistoryList">
+                    <div class="upload-history-empty">No previous conversations. Start fresh by uploading a document.</div>
+                </div>
+            </div>
+
+            <!-- Uploaded Documents Section -->
+            <div class="uploaded-documents-section" id="uploadedDocsSection" style="display:none">
+                <div class="uploaded-documents-header">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2-13H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
+                        Uploaded Documents
+                    </h3>
+                </div>
+                <div class="uploaded-documents-list" id="uploadedDocsList"></div>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-zone-inner" id="uploadDropArea">
+                    <div class="upload-icon-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 5.75 5.75 0 011.344 11.095"/></svg>
+                    </div>
+                    <p class="upload-main-text">Drop your files here</p>
+                    <p class="upload-sub-text">Supports PDF and TXT files</p>
+                    <button class="btn-outline" onclick="document.getElementById('fileInputUpload').click()">Browse Files</button>
+                    <input type="file" id="fileInputUpload" accept=".pdf,.txt" multiple hidden>
+                </div>
+            </div>
+
+            <div class="uploaded-files" id="uploadedFiles"></div>
+
+            <div class="upload-success-msg" id="uploadSuccessMsg" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Resources successfully added to knowledge base
+            </div>
+
+            <div class="upload-progress-wrap" id="uploadProgressWrap" style="display:none">
+                <div class="upload-progress-bar">
+                    <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                </div>
+                <span class="upload-progress-label" id="uploadProgressLabel">Processing...</span>
+            </div>
+
+            <div class="upload-actions">
+                <button class="btn-primary" id="btnGoToChat" disabled onclick="goToPage('chat')">
+                    Go to Chat
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PAGE 3: CHAT ===================== -->
+    <div class="page" id="page-chat">
+        <div class="chat-layout">
+
+            <!-- Left Sidebar: Framework Library -->
+            <aside class="framework-sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                        RAG System
+                    </div>
+                </div>
+
+                <div class="sidebar-domain-info">
+                    <div class="sidebar-domain-label">Active Domain</div>
+                    <div class="sidebar-domain-name" id="sidebarDomainName">General</div>
+                    <button class="btn-change-domain" onclick="goToPage('domain')">Change Domain</button>
+                </div>
+
+                <div class="framework-section">
+                    <div class="framework-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h8"/></svg>
+                        Domain Framework Loaded
+                    </div>
+
+                    <div class="framework-card">
+                        <div class="framework-card-label">Definitions</div>
+                        <div class="framework-card-content" id="frameworkDefinitions">Core domain terminology and concepts loaded from knowledge base.</div>
+                    </div>
+                    <div class="framework-card">
+                        <div class="framework-card-label">Terminology</div>
+                        <div class="framework-card-content" id="frameworkTerminology">Specialized vocabulary and domain-specific language patterns.</div>
+                    </div>
+                    <div class="framework-card">
+                        <div class="framework-card-label">Rules</div>
+                        <div class="framework-card-content" id="frameworkRules">Domain validation rules applied during response generation.</div>
+                    </div>
+                    <div class="framework-card">
+                        <div class="framework-card-label">Constraints</div>
+                        <div class="framework-card-content" id="frameworkConstraints">Boundary conditions for accurate domain-aware responses.</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-retrieval">
+                    <div class="framework-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+                        Retrieval Mode (Auto)
+                    </div>
+                    <div class="retrieval-auto-note">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 00 8 14.5v1a6 6 0 003 5.196V21h6v-2.304A6 6 0 0015.5 15.5v-1a3.374 3.374 0 00-1.879-2.998l-.548-.547z"/></svg>
+                        Automatically detects the best mode based on your question
+                    </div>
+                    <label class="retrieval-option" style="opacity: 0.6; pointer-events: none;">
+                        <input type="radio" name="retrieval" value="direct" checked disabled>
+                        <span class="retrieval-option-inner">
+                            <span class="retrieval-name">Direct</span>
+                            <span class="retrieval-desc">Cosine similarity search</span>
+                        </span>
+                    </label>
+                    <label class="retrieval-option" style="opacity: 0.6; pointer-events: none;">
+                        <input type="radio" name="retrieval" value="llm" disabled>
+                        <span class="retrieval-option-inner">
+                            <span class="retrieval-name">LLM-Assisted</span>
+                            <span class="retrieval-desc">Query expansion + retrieval</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Chat History Panel -->
+                <div class="sidebar-history">
+                    <div class="framework-section-title history-title-row">
+                        <span class="history-title-left">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Chat History
+                        </span>
+                        <button class="btn-clear-history" onclick="clearHistory()" title="Clear all history">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                        </button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <div class="history-empty" id="historyEmpty">No previous conversations yet.</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-data-mgmt">
+                    <div class="framework-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>
+                        Data
+                    </div>
+                    <div class="data-btns">
+                        <button class="btn-data" onclick="loadSavedData()">Load</button>
+                        <button class="btn-data btn-export" onclick="exportChatPDF()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                            Export Chat PDF
+                        </button>
+                        <button class="btn-data btn-add-d" onclick="addCustomDomain()">+ Domain</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Chat Area -->
+            <main class="chat-main">
+                <div class="chat-topbar">
+                    <div class="topbar-left">
+                        <button class="btn-back-sm" onclick="goToPage('upload')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg>
+                        </button>
+                        <div class="topbar-title">Knowledge Chat</div>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="topbar-status">
+                            <span class="status-dot"></span>
+                            <span id="topbarStatus">Ready</span>
+                        </div>
+                        <div class="topbar-user">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
+                            <span id="userDisplayName">User</span>
+                        </div>
+                        <button class="btn-logout" onclick="logout()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages-area" id="messagesArea">
+                    <div class="chat-welcome">
+                        <div class="chat-welcome-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+                        </div>
+                        <h3>Ask anything about your documents</h3>
+                        <p>The system will retrieve the most relevant information and generate a domain-aware response.</p>
+                        <div class="suggestion-chips" id="suggestionChips">
+                            <button class="chip" onclick="useChip(this)">What are the main topics?</button>
+                            <button class="chip" onclick="useChip(this)">Summarize this document</button>
+                            <button class="chip" onclick="useChip(this)">What are the key findings?</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-wrap">
+                        <textarea 
+                            id="chatInput" 
+                            class="chat-textarea" 
+                            placeholder="Ask a question about your documents..."
+                            rows="1"
+                        ></textarea>
+                        <button class="chat-send-btn" id="chatSendBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+                        </button>
+                    </div>
+                    <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Domain Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Add Custom Domain</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Domain Name</label>
+                    <input type="text" id="modalDomainName" class="form-input" placeholder="e.g., Education">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Keywords (comma-separated)</label>
+                    <input type="text" id="modalKeywords" class="form-input" placeholder="e.g., student, learning, curriculum">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prompt Prefix</label>
+                    <input type="text" id="modalPromptPrefix" class="form-input" placeholder="e.g., As an education expert, ">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-sm" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary-sm" onclick="submitAddDomain()">Add Domain</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden print area – populated by exportChatPDF() -->
+    <div id="printArea" style="display:none"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
